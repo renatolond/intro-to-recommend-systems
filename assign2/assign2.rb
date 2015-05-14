@@ -35,10 +35,6 @@ user2_prefs = NArray.int(headers.length-1)
 	user2_prefs[i] = (my_slice.transpose[0, true] * user2_matrix).sum
 end
 
-
-p user1_prefs
-p user2_prefs
-
 user1_predict = NArray.int(docs_subjects_matrix.shape[1])
 user2_predict = NArray.int(docs_subjects_matrix.shape[1])
 
@@ -49,12 +45,50 @@ user2_predict = NArray.int(docs_subjects_matrix.shape[1])
 end
 
 indexes_predict = user1_predict.to_a.map.with_index.sort.map(&:last).reverse
-p subjects[indexes_predict[0]][0]
-p user1_predict[indexes_predict[0]]
+puts "Part 1:"
+puts "User 1 will probably like: #{subjects[indexes_predict[0]][0]} with #{user1_predict[indexes_predict[0]]}"
+puts "User 2 has #{user2_predict[user2_predict.lt 0.0].length} negative predictions"
 
-p user2_predict[user2_predict.lt 0.0].length
-#p trans
-#p user1_matrix
-#p user2_matrix
+print user1_predict[indexes_predict].to_a
+puts ""
+indexes_predict.each do |i|
+	print "#{subjects[i][0]} "
+end
+puts ""
+puts ""
 
-#p trans*user1_matrix
+# Normalize unit weight
+
+normalized_docs_subjects_matrix = NArray.float(docs_subjects_matrix.shape[0], docs_subjects_matrix.shape[1])
+
+0.upto(normalized_docs_subjects_matrix.shape[1]-1) do |i|
+	slice = docs_subjects_matrix[true, i]
+	normalized_docs_subjects_matrix[true, i] = docs_subjects_matrix[true, i].to_f / Math.sqrt(slice[slice.gt 0.0].length)
+end
+
+user1_weighted_prefs = NArray.float(headers.length-1)
+user2_weighted_prefs = NArray.float(headers.length-1)
+0.upto(normalized_docs_subjects_matrix.shape[0]-1) do |i|
+	my_slice = normalized_docs_subjects_matrix.slice(i, true)
+	user1_weighted_prefs[i] = (my_slice.transpose[0, true] * user1_matrix).sum
+	user2_weighted_prefs[i] = (my_slice.transpose[0, true] * user2_matrix).sum
+end
+
+user1_weighted_predict = NArray.float(normalized_docs_subjects_matrix.shape[1])
+user2_weighted_predict = NArray.float(normalized_docs_subjects_matrix.shape[1])
+
+0.upto(normalized_docs_subjects_matrix.shape[1]-1) do |i|
+	my_slice = normalized_docs_subjects_matrix.slice(true, i)
+	user1_weighted_predict[i] = (my_slice * user1_weighted_prefs).sum
+	user2_weighted_predict[i] = (my_slice * user2_weighted_prefs).sum
+end
+
+weighted_indexes_predict = user1_weighted_predict.to_a.map.with_index.sort.map(&:last).reverse
+print user1_weighted_predict[weighted_indexes_predict].to_a
+puts ""
+weighted_indexes_predict.each do |i|
+	print "#{subjects[i][0]} "
+end
+puts ""
+
+
