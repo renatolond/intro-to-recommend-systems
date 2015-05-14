@@ -46,14 +46,9 @@ end
 
 indexes_predict = user1_predict.to_a.map.with_index.sort.map(&:last).reverse
 puts "Part 1:"
-puts "User 1 will probably like: #{subjects[indexes_predict[0]][0]} with #{user1_predict[indexes_predict[0]]}"
+puts "User 1 will probably like: #{subjects[indexes_predict[0]+1][0]} with #{user1_predict[indexes_predict[0]]}"
 puts "User 2 has #{user2_predict[user2_predict.lt 0.0].length} negative predictions"
 
-print user1_predict[indexes_predict].to_a
-puts ""
-indexes_predict.each do |i|
-	print "#{subjects[i][0]} "
-end
 puts ""
 puts ""
 
@@ -84,11 +79,25 @@ user2_weighted_predict = NArray.float(normalized_docs_subjects_matrix.shape[1])
 end
 
 weighted_indexes_predict = user1_weighted_predict.to_a.map.with_index.sort.map(&:last).reverse
-print user1_weighted_predict[weighted_indexes_predict].to_a
+puts "User 1 second choice is #{subjects[weighted_indexes_predict[1]+1][0]} with score #{user1_weighted_predict[weighted_indexes_predict[1]+1]}"
 puts ""
-weighted_indexes_predict.each do |i|
-	print "#{subjects[i][0]} "
+
+# idf
+
+idf = NArray.float(normalized_docs_subjects_matrix.shape[0])
+
+0.upto(idf.shape[0]-1) do |i|
+	slice = docs_subjects_matrix[i, true]
+	idf[i] = 1.0/(slice[slice.gt 0.0].length)
 end
-puts ""
 
+user1_idf_weighted_predict = NArray.float(normalized_docs_subjects_matrix.shape[1])
+user2_idf_weighted_predict = NArray.float(normalized_docs_subjects_matrix.shape[1])
 
+0.upto(normalized_docs_subjects_matrix.shape[1]-1) do |i|
+	my_slice = normalized_docs_subjects_matrix.slice(true, i)
+	user1_idf_weighted_predict[i] = (my_slice * user1_weighted_prefs * idf).sum
+	user2_idf_weighted_predict[i] = (my_slice * user2_weighted_prefs * idf).sum
+end
+
+p user1_idf_weighted_predict[8]
